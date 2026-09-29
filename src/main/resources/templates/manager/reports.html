@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="csrf-token" th:content="${csrfToken}">
+<title>Training reports | CATS</title>
+<link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+<header th:replace="~{fragments/layout :: header}">
+</header>
+<main>
+<div th:replace="~{fragments/layout :: messages}">
+</div>
+<h1>Team training reports</h1>
+<section class="card">
+<form method="get" th:action="@{/manager/reports}" class="grid">
+<label>From<input type="date" name="from" th:value="${from}" required>
+</label>
+<label>To<input type="date" name="to" th:value="${to}" required>
+</label>
+<label>Employee<select name="employeeId">
+<option value="">All reporting employees</option>
+<option th:each="u:${team}" th:value="${u.id}" th:text="${u.name}" th:selected="${employeeId==u.id}">
+</option>
+</select>
+</label>
+<label>Category<select name="category">
+<option value="">All categories</option>
+<option th:each="c:${categories}" th:value="${c}" th:text="${c}" th:selected="${category==c}">
+</option>
+</select>
+</label>
+<button class="primary">Generate reports</button>
+</form>
+<div class="actions">
+<a class="button" th:href="@{/manager/reports/attendance.csv(from=${from},to=${to},employeeId=${employeeId},category=${category})}">Export attendance CSV</a>
+<a class="button" th:href="@{/manager/reports/claims.csv(from=${from},to=${to},employeeId=${employeeId},category=${category})}">Export claims CSV</a>
+<a class="button" th:href="@{/manager/reports/budget.csv(from=${from},to=${to},employeeId=${employeeId},category=${category})}">Export budget CSV</a>
+</div>
+</section>
+<section class="card">
+<h2>Attendance</h2>
+<table>
+<tr>
+<th>Employee</th>
+<th>Course</th>
+<th>Category</th>
+<th>Dates</th>
+<th>Status</th>
+</tr>
+<tr th:each="a:${report.attendance()}">
+<td th:text="${a.employee.name}">
+</td>
+<td th:text="${a.courseTitle}">
+</td>
+<td th:text="${a.category}">
+</td>
+<td th:text="|${a.startDate} – ${a.endDate}|">
+</td>
+<td th:text="${a.status}">
+</td>
+</tr>
+</table>
+</section>
+<section class="card">
+<h2>Claims submitted during the period</h2>
+<table>
+<tr>
+<th>Employee</th>
+<th>Course</th>
+<th>Fee</th>
+<th>Status</th>
+</tr>
+<tr th:each="c:${report.claims()}">
+<td th:text="${c.application.employee.name}">
+</td>
+<td th:text="${c.application.courseTitle}">
+</td>
+<td th:text="${c.amount}">
+</td>
+<td th:text="${c.status}">
+</td>
+</tr>
+</table>
+</section>
+<section class="card">
+<h2>Annual budget utilisation</h2>
+<p class="hint">Whole-year totals for each year touched by the period. Category filters apply to attendance/claim rows; annual budgets include all categories.</p>
+<div class="table-wrap">
+<table>
+<tr>
+<th>Employee</th>
+<th>Year</th>
+<th>Budget</th>
+<th>Committed</th>
+<th>Pending</th>
+<th>Remaining</th>
+<th>Reimbursed</th>
+</tr>
+<tr th:each="b:${report.budgets()}">
+<td th:text="${b.employee() + (b.configured() ? '' : ' (entitlement not configured)')}">
+</td>
+<td th:text="${b.usage().year()}">
+</td>
+<td th:text="${b.usage().budgetLimit()}">
+</td>
+<td th:text="${b.usage().committedFees()}">
+</td>
+<td th:text="${b.usage().pendingFees()}">
+</td>
+<td th:text="${b.usage().remainingBudget()}">
+</td>
+<td th:text="${b.reimbursed()}">
+</td>
+</tr>
+</table>
+</div>
+</section>
+</main>
+<footer>CATS · Complete CA reference implementation</footer>
+</body>
+</html>

@@ -13,11 +13,14 @@ public class EmployeeController {
   private final CourseApplicationService applications;
   private final EntitlementService entitlements;
   private final Clock clock;
+  private final PagedApplicationService pages;
 
-  public EmployeeController(CourseApplicationService a, EntitlementService e, Clock c) {
+  public EmployeeController(
+      CourseApplicationService a, EntitlementService e, Clock c, PagedApplicationService pages) {
     applications = a;
     entitlements = e;
     clock = c;
+    this.pages = pages;
   }
 
   @GetMapping("/employee")
@@ -30,10 +33,15 @@ public class EmployeeController {
   }
 
   @GetMapping("/applications")
-  public String history(HttpSession s, Model m) {
-    m.addAttribute(
-        "applications",
-        applications.getPersonalHistory(WebConfig.user(s).id(), LocalDate.now(clock).getYear()));
+  public String history(
+      HttpSession s,
+      Model m,
+      @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0") int page,
+      @org.springframework.web.bind.annotation.RequestParam(defaultValue = "10") int size) {
+    var result = pages.history(WebConfig.user(s).id(), WebConfig.user(s).id(), false, page, size);
+    m.addAttribute("applications", result.getContent());
+    m.addAttribute("page", result);
+    m.addAttribute("pagePath", "/applications");
     m.addAttribute("heading", "My course history");
     m.addAttribute("managerView", false);
     return "applications/history";

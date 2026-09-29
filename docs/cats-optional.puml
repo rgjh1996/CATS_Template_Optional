@@ -1,0 +1,184 @@
+@startuml CATS_Optional
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+title CATS core plus optional CA features
+package "Core domain" {
+ class User {
+  id : Long
+  username : String
+  passwordHash : String
+  name : String
+  email : String
+  enabled : boolean
+  roles : Set<Role>
+  designation : Designation
+ }
+ class CourseApplication {
+  courseTitle : String
+  category : CourseCategory
+  trainingProvider : String
+  startDate : LocalDate
+  endDate : LocalDate
+  startSession : DaySession
+  endSession : DaySession
+  courseFee : BigDecimal
+  trainingDays : BigDecimal
+  status : ApplicationStatus
+  managerComment : String
+  experienceComment : String
+  version : Long
+ }
+ class AnnualEntitlement {
+  year : int
+  trainingDayLimit : BigDecimal
+  budgetLimit : BigDecimal
+ }
+ class PublicHoliday {
+  holidayDate : LocalDate
+  description : String
+ }
+ enum Role {
+  EMPLOYEE
+  MANAGER
+  ADMIN
+ }
+ enum Designation {
+  ADMINISTRATIVE
+  PROFESSIONAL
+ }
+ enum CourseCategory {
+  INTERNAL_TRAINING
+  EXTERNAL_COURSE
+  PROFESSIONAL_CERTIFICATION
+ }
+ enum ApplicationStatus {
+  APPLIED
+  UPDATED
+  APPROVED
+  REJECTED
+  CANCELLED
+  COMPLETED
+  DELETED
+ }
+ enum DaySession {
+  AM
+  PM
+ }
+ User "0..1 manager" <-- "0..* reports" User
+ User "1" <-- "0..*" CourseApplication : employee
+ User "1" -- "0..*" AnnualEntitlement
+}
+package "Optional domain" #E8F3FF {
+ class CategorySettings {
+  code : CourseCategory
+  label : String
+  active : boolean
+ }
+ class TrainingProvider {
+  name : String
+  active : boolean
+ }
+ class Course {
+  title : String
+  category : CourseCategory
+  defaultFee : BigDecimal
+  active : boolean
+ }
+ class FeeClaim {
+  amount : BigDecimal
+  status : ClaimStatus
+  reason : String
+  submittedAt : LocalDateTime
+  decidedAt : LocalDateTime
+  reimbursedAt : LocalDateTime
+ }
+ class ClaimAttachment {
+  filename : String
+  contentType : String
+  content : byte[]
+ }
+ class TrainingLedger {
+  year : int
+ }
+ class LedgerEntry {
+  kind : LedgerEntryKind
+  amount : BigDecimal
+  eventKey : String
+  recordedAt : LocalDateTime
+ }
+ class EmailNotification {
+  recipient : String
+  subject : String
+  body : String
+  status : EmailStatus
+  attempts : int
+ }
+ enum ClaimStatus {
+  SUBMITTED
+  APPROVED
+  REJECTED
+  REIMBURSED
+ }
+ enum LedgerEntryKind {
+  BUDGET_ADJUSTMENT
+  FEE_APPROVED
+  FEE_RELEASE
+  REIMBURSEMENT
+ }
+ enum EmailStatus {
+  PENDING
+  SENT
+  FAILED
+ }
+ TrainingProvider "1" <-- "0..*" Course
+ Course "0..1" <-- "0..*" CourseApplication : selected catalogue item
+ CourseApplication "1" -- "0..1" FeeClaim
+ FeeClaim "1" *-- "2" ClaimAttachment : receipt + certificate
+ User "0..1" <-- "0..*" FeeClaim : decidedBy
+ User "1" -- "0..*" TrainingLedger : one per year
+ TrainingLedger "1" -- "0..*" LedgerEntry
+}
+package "Controllers and services" {
+ class AdminController <<MVC>>
+ class ClaimController <<MVC>>
+ class ReportController <<MVC>>
+ class CalendarController <<MVC>>
+ class ApplicationRestController <<REST>>
+ class RestClientController <<MVC>>
+ class AdministrationService
+ class ClaimService
+ class LedgerService
+ class ReportService
+ class CourseApplicationService
+ class ApprovalService
+ class NotificationService
+ class EmailDispatcher
+ class PagedApplicationService
+ class CourseRepository <<REST repository>>
+ class "Other JpaRepository interfaces" as Repositories
+ AdminController --> AdministrationService
+ AdminController --> ClaimService
+ ClaimController --> ClaimService
+ ClaimController --> LedgerService
+ ReportController --> ReportService
+ ApplicationRestController --> CourseApplicationService
+ ApplicationRestController --> PagedApplicationService
+ AdministrationService --> LedgerService
+ ClaimService --> LedgerService
+ ApprovalService --> LedgerService
+ ApprovalService --> NotificationService
+ CourseApplicationService --> NotificationService
+ CourseApplicationService --> LedgerService
+ NotificationService --> EmailNotification
+ EmailDispatcher --> EmailNotification
+ EmailDispatcher --> SMTP
+ LedgerService --> Repositories
+ ReportService --> Repositories
+ AdministrationService --> Repositories
+ ClaimService --> Repositories
+ PagedApplicationService --> Repositories
+ CourseRepository --> Course
+ CalendarController --> Repositories
+}
+note "Spring Security protects MVC, REST, catalogue and attachment endpoints.\nSee source for full method signatures and the retained core services/controllers." as Security
+@enduml

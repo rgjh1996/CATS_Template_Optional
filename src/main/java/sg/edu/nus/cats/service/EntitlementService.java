@@ -29,6 +29,11 @@ public class EntitlementService {
     return usage(employeeId, year, null);
   }
 
+  @Transactional(readOnly = true)
+  public boolean configured(Long employeeId, int year) {
+    return entitlements.findByEmployeeIdAndYear(employeeId, year).isPresent();
+  }
+
   public AnnualUsage usage(Long employeeId, int year, Long excludeId) {
     AnnualEntitlement e =
         entitlements

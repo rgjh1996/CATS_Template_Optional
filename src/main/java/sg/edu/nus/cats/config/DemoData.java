@@ -12,6 +12,7 @@ import sg.edu.nus.cats.model.*;
 import sg.edu.nus.cats.model.enums.*;
 import sg.edu.nus.cats.repository.*;
 
+@org.springframework.core.annotation.Order(0)
 @Component
 @ConditionalOnProperty(name = "cats.seed", havingValue = "true")
 public class DemoData implements CommandLineRunner {
@@ -64,6 +65,13 @@ public class DemoData implements CommandLineRunner {
         h.setDescription(d.getMonthValue() == 1 ? "New Year's Day" : "Christmas Day");
         holidays.save(h);
       }
+    sample(
+        alice,
+        manager,
+        "Completed certification for fee claim",
+        weekday(LocalDate.now(clock).minusDays(20)),
+        ApplicationStatus.COMPLETED,
+        new BigDecimal("200"));
     LocalDate future = weekday(LocalDate.now(clock).plusDays(7));
     sample(
         alice,
@@ -92,6 +100,7 @@ public class DemoData implements CommandLineRunner {
     var u = new User();
     u.setUsername(username);
     u.setName(name);
+    u.setEmail(username + "@example.test");
     u.setPasswordHash(encoder.encode("DemoPass123!"));
     u.setRoles(new HashSet<>(roles));
     u.setDesignation(Designation.PROFESSIONAL);
@@ -129,7 +138,11 @@ public class DemoData implements CommandLineRunner {
     a.setJustification("Develop practical skills relevant to my current responsibilities.");
     a.setWorkDissemination("Share notes with the team after attending.");
     a.setStatus(status);
-    if (status == ApplicationStatus.APPROVED) {
+    if (status == ApplicationStatus.COMPLETED) {
+      a.setCategory(CourseCategory.PROFESSIONAL_CERTIFICATION);
+      a.setExperienceComment("Completed the certification and shared notes with the team.");
+    }
+    if (status == ApplicationStatus.APPROVED || status == ApplicationStatus.COMPLETED) {
       a.setDecidedBy(manager);
       a.setDecidedAt(LocalDateTime.now(clock));
       a.setManagerComment("Approved. Please share the key learning points with the team.");

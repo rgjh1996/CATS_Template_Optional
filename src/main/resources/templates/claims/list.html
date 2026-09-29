@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="csrf-token" th:content="${csrfToken}">
+<title>Fee claims | CATS</title>
+<link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+<header th:replace="~{fragments/layout :: header}">
+</header>
+<main>
+<div th:replace="~{fragments/layout :: messages}">
+</div>
+<h1>Course fee claims</h1>
+<p th:unless="${managerView or adminView}">Submit a claim from a completed external course or certification in your course history.</p>
+<section class="card" th:each="c:${claims}">
+<div class="section-heading">
+<h2 th:text="${c.application.courseTitle}">
+</h2>
+<span class="badge" th:text="${c.status}">
+</span>
+</div>
+<p>
+<span th:text="${c.application.employee.name}">
+</span> · $<span th:text="${c.amount}">
+</span>
+</p>
+<div class="actions">
+<a th:href="@{/attachments/claims/{id}/receipt(id=${c.id})}">Download receipt</a>
+<a th:href="@{/attachments/claims/{id}/certificate(id=${c.id})}">Download certificate</a>
+</div>
+<p th:if="${c.reason}" th:text="|Decision reason: ${c.reason}|">
+</p>
+<div th:if="${managerView and c.status.name()=='SUBMITTED'}">
+<form method="post" th:action="@{/manager/claims/{id}/approve(id=${c.id})}" >
+<input type="hidden" name="_csrf" th:value="${csrfToken}">
+<label>Decision reason<textarea name="reason" required maxlength="2000">
+</textarea>
+</label>
+<div class="actions">
+<button class="primary">Approve claim</button>
+<button class="danger" th:formaction="@{/manager/claims/{id}/reject(id=${c.id})}">Reject claim</button>
+</div>
+</form>
+</div>
+<div th:if="${adminView and c.status.name()=='APPROVED'}">
+<form method="post" th:action="@{/admin/claims/{id}/reimburse(id=${c.id})}" >
+<input type="hidden" name="_csrf" th:value="${csrfToken}">
+<p class="hint">Record a reimbursement already made outside CATS. This does not send a bank payment.</p>
+<button class="primary">Record reimbursement</button>
+</form>
+</div>
+</section>
+<section class="card" th:if="${#lists.isEmpty(claims)}">No claims to show.</section>
+</main>
+<footer>CATS · Complete CA reference implementation</footer>
+</body>
+</html>

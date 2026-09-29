@@ -216,4 +216,15 @@ public class CourseApplication {
   public void setVersion(Long version) {
     this.version = version;
   }
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  private Course catalogueCourse;
+
+  public Course getCatalogueCourse() {
+    return catalogueCourse;
+  }
+
+  public void setCatalogueCourse(Course value) {
+    this.catalogueCourse = value;
+  }
 }

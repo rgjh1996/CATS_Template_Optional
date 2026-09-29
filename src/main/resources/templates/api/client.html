@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="csrf-token" th:content="${csrfToken}">
+<title>REST client | CATS</title>
+<link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+<header th:replace="~{fragments/layout :: header}">
+</header>
+<main>
+<div th:replace="~{fragments/layout :: messages}">
+</div>
+<span class="eyebrow">BROWSER CLIENT + REST</span>
+<h1>Courses and applications</h1>
+<p>This page loads your applications from the REST controller and catalogue courses from the Spring Data REST repository.</p>
+<div id="api-message" role="status">
+</div>
+<section class="card">
+<h2>Course catalogue</h2>
+<div id="catalogue">
+</div>
+<div class="actions">
+<button id="catalogue-prev">Previous courses</button>
+<span id="catalogue-page">
+</span>
+<button id="catalogue-next">Next courses</button>
+</div>
+</section>
+<section class="card">
+<h2>My applications</h2>
+<div id="api-applications">
+</div>
+<div class="actions">
+<button id="api-prev">Previous</button>
+<span id="api-page">
+</span>
+<button id="api-next">Next</button>
+<label>Rows<select id="api-size">
+<option>10</option>
+<option>20</option>
+<option>25</option>
+</select>
+</label>
+</div>
+</section>
+<section class="card form-card">
+<h2>Submit via REST</h2>
+<form id="api-form">
+<label>Title<input name="courseTitle" required maxlength="200">
+</label>
+<label>Category<select name="category">
+<option>EXTERNAL_COURSE</option>
+<option>INTERNAL_TRAINING</option>
+<option>PROFESSIONAL_CERTIFICATION</option>
+</select>
+</label>
+<label>Provider<input name="trainingProvider" required>
+</label>
+<div class="grid">
+<label>Start date<input name="startDate" type="date" required>
+</label>
+<label>End date<input name="endDate" type="date" required>
+</label>
+<label>Start session<select name="startSession">
+<option>AM</option>
+<option>PM</option>
+</select>
+</label>
+<label>End session<select name="endSession">
+<option>PM</option>
+<option>AM</option>
+</select>
+</label>
+</div>
+<label>Fee<input name="courseFee" type="number" min="0" step="0.01" required>
+</label>
+<label>Justification<textarea name="justification" required maxlength="2000">
+</textarea>
+</label>
+<label>Work dissemination<textarea name="workDissemination" maxlength="2000">
+</textarea>
+</label>
+<button class="primary">Submit application</button>
+</form>
+</section>
+</main>
+<footer>CATS · Complete CA reference implementation</footer>
+<script th:src="@{/js/rest-client.js}" defer>
+</script>
+</body>
+</html>

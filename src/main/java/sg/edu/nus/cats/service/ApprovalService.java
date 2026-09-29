@@ -17,18 +17,24 @@ public class ApprovalService {
   private final EntitlementService entitlements;
   private final CourseApplicationService applicationService;
   private final Clock clock;
+  private final LedgerService ledger;
+  private final NotificationService notifications;
 
   public ApprovalService(
       UserRepository u,
       CourseApplicationRepository a,
       EntitlementService e,
       CourseApplicationService s,
-      Clock c) {
+      Clock c,
+      LedgerService ledger,
+      NotificationService notifications) {
     users = u;
     applications = a;
     entitlements = e;
     applicationService = s;
     clock = c;
+    this.ledger = ledger;
+    this.notifications = notifications;
   }
 
   @Transactional(readOnly = true)
@@ -106,6 +112,15 @@ public class ApprovalService {
     a.setManagerComment(reason.trim());
     a.setDecidedBy(manager);
     a.setDecidedAt(LocalDateTime.now(clock));
+    if (approve)
+      ledger.post(
+          a.getEmployee(),
+          a.getStartDate().getYear(),
+          LedgerEntryKind.FEE_APPROVED,
+          a.getCourseFee(),
+          "application-approved-" + id,
+          "Approved " + a.getCourseTitle());
+    notifications.decided(a);
   }
 
   private Long applicationsEmployeeId(Long id) {

@@ -24,6 +24,10 @@ public class CourseApplicationService {
   private final EntitlementService entitlements;
   private final Clock clock;
   private final Validator validator;
+  private final CourseRepository courses;
+  private final NotificationService notifications;
+  private final LedgerService ledger;
+  private final CategorySettingsRepository categories;
 
   public CourseApplicationService(
       UserRepository u,
@@ -31,13 +35,21 @@ public class CourseApplicationService {
       TrainingCalendarService c,
       EntitlementService e,
       Clock clock,
-      Validator validator) {
+      Validator validator,
+      NotificationService notifications,
+      LedgerService ledger,
+      CategorySettingsRepository categories,
+      CourseRepository courses) {
     users = u;
     applications = a;
     calendar = c;
     entitlements = e;
     this.clock = clock;
     this.validator = validator;
+    this.notifications = notifications;
+    this.ledger = ledger;
+    this.categories = categories;
+    this.courses = courses;
   }
 
   @Transactional
@@ -50,7 +62,9 @@ public class CourseApplicationService {
     copyAndValidate(form, a, true);
     a.setStatus(ApplicationStatus.APPLIED);
     validateCapacityAndOverlap(a, null);
-    return applications.save(a);
+    applications.save(a);
+    notifications.submitted(a);
+    return a;
   }
 
   @Transactional
@@ -80,6 +94,13 @@ public class CourseApplicationService {
     var a = owned(employeeId, id);
     requireApproved(a);
     a.setStatus(ApplicationStatus.CANCELLED);
+    ledger.post(
+        a.getEmployee(),
+        a.getStartDate().getYear(),
+        LedgerEntryKind.FEE_RELEASE,
+        a.getCourseFee().negate(),
+        "application-cancel-" + id,
+        "Cancelled " + a.getCourseTitle());
   }
 
   @Transactional
@@ -144,6 +165,8 @@ public class CourseApplicationService {
       throw new BusinessException("Please complete all required fields with valid values.");
     if (requireFuture && !f.getStartDate().isAfter(LocalDate.now(clock)))
       throw new BusinessException("The course must start on a future date.");
+    if (categories.findById(f.getCategory()).map(c -> !c.getActive()).orElse(false))
+      throw new BusinessException("This course category is currently unavailable.");
     if (f.getCategory() == CourseCategory.INTERNAL_TRAINING) {
       if (f.getCourseFee().signum() != 0)
         throw new BusinessException("Internal training must have zero course fee.");
@@ -156,6 +179,15 @@ public class CourseApplicationService {
     var days =
         calendar.daysByYear(
             f.getStartDate(), f.getEndDate(), f.getStartSession(), f.getEndSession());
+    if (f.getCatalogueCourseId() != null) {
+      var course =
+          courses
+              .findById(f.getCatalogueCourseId())
+              .orElseThrow(() -> new BusinessException("Catalogue course not found."));
+      if (!course.getActive() || !course.getProvider().getActive())
+        throw new BusinessException("This catalogue course is unavailable.");
+      a.setCatalogueCourse(course);
+    } else a.setCatalogueCourse(null);
     a.setCourseTitle(f.getCourseTitle().trim());
     a.setTrainingProvider(f.getTrainingProvider().trim());
     a.setCategory(f.getCategory());
@@ -172,6 +204,7 @@ public class CourseApplicationService {
   public ApplicationForm toForm(CourseApplication a) {
     var f = new ApplicationForm();
     f.setCourseTitle(a.getCourseTitle());
+    f.setCatalogueCourseId(a.getCatalogueCourse() == null ? null : a.getCatalogueCourse().getId());
     f.setCategory(a.getCategory());
     f.setTrainingProvider(a.getTrainingProvider());
     f.setStartDate(a.getStartDate());

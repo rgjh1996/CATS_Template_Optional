@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="csrf-token" th:content="${csrfToken}">
+<title>Submit reimbursement claim | CATS</title>
+<link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+<header th:replace="~{fragments/layout :: header}">
+</header>
+<main>
+<div th:replace="~{fragments/layout :: messages}">
+</div>
+<h1>Claim your course fee</h1>
+<section class="card form-card">
+<h2 th:text="${courseApplication.courseTitle}">
+</h2>
+<p th:text="|Claim amount: $${courseApplication.courseFee}|">
+</p>
+<form method="post" th:action="@{/claims}" enctype="multipart/form-data">
+<input type="hidden" name="_csrf" th:value="${csrfToken}">
+<input type="hidden" name="applicationId" th:value="${courseApplication.id}">
+<label class="check">
+<input type="checkbox" name="selfPaid" value="true" required>I paid this course fee myself.</label>
+<label>Receipt (PDF, PNG or JPEG; maximum 5 MB)<input type="file" name="receipt" accept=".pdf,.png,.jpg,.jpeg" required>
+</label>
+<label>Certificate of completion (PDF, PNG or JPEG; maximum 5 MB)<input type="file" name="certificate" accept=".pdf,.png,.jpg,.jpeg" required>
+</label>
+<button class="primary">Submit claim</button>
+</form>
+</section>
+</main>
+<footer>CATS · Complete CA reference implementation</footer>
+</body>
+</html>

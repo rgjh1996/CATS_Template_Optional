@@ -18,25 +18,50 @@ import sg.edu.nus.cats.service.ApprovalService;
 public class ManagerController {
   private final ApprovalService service;
   private final Clock clock;
+  private final sg.edu.nus.cats.service.PagedApplicationService pages;
 
-  public ManagerController(ApprovalService s, Clock c) {
+  public ManagerController(
+      ApprovalService s, Clock c, sg.edu.nus.cats.service.PagedApplicationService pages) {
     service = s;
     clock = c;
+    this.pages = pages;
   }
 
   @GetMapping("/pending")
-  public String pending(HttpSession s, Model m) {
+  public String pending(
+      HttpSession s,
+      Model m,
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "10") int size) {
     var id = WebConfig.user(s).id();
-    m.addAttribute("groups", service.getPendingBySubordinate(id));
+    var result = pages.pending(id, page, size);
+    var groups =
+        new java.util.LinkedHashMap<
+            String, java.util.List<sg.edu.nus.cats.model.CourseApplication>>();
+    for (var a : result)
+      groups
+          .computeIfAbsent(
+              a.getEmployee().getName() + " (#" + a.getEmployee().getId() + ")",
+              k -> new java.util.ArrayList<>())
+          .add(a);
+    m.addAttribute("groups", groups);
+    m.addAttribute("page", result);
+    m.addAttribute("pagePath", "/manager/pending");
     m.addAttribute("team", service.getSubordinates(id));
     return "manager/pending";
   }
 
   @GetMapping("/employees/{id}/history")
-  public String history(@PathVariable Long id, HttpSession s, Model m) {
-    m.addAttribute(
-        "applications",
-        service.getSubordinateHistory(WebConfig.user(s).id(), id, LocalDate.now(clock).getYear()));
+  public String history(
+      @PathVariable Long id,
+      HttpSession s,
+      Model m,
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "10") int size) {
+    var result = pages.history(WebConfig.user(s).id(), id, true, page, size);
+    m.addAttribute("applications", result.getContent());
+    m.addAttribute("page", result);
+    m.addAttribute("pagePath", "/manager/employees/" + id + "/history");
     m.addAttribute("heading", "Subordinate course history");
     m.addAttribute("managerView", true);
     return "applications/history";

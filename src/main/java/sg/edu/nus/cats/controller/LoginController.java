@@ -14,14 +14,18 @@ import sg.edu.nus.cats.service.AuthenticationService;
 @Controller
 public class LoginController {
   private final AuthenticationService authentication;
+  private final org.springframework.security.web.context.SecurityContextRepository contexts;
 
-  public LoginController(AuthenticationService a) {
+  public LoginController(
+      AuthenticationService a,
+      org.springframework.security.web.context.SecurityContextRepository contexts) {
     authentication = a;
+    this.contexts = contexts;
   }
 
   @GetMapping("/")
   public String home() {
-    return "redirect:/employee";
+    return "redirect:/calendar";
   }
 
   @GetMapping({"/employee/login", "/admin/login"})
@@ -35,7 +39,8 @@ public class LoginController {
       @Valid @ModelAttribute("form") LoginForm form,
       BindingResult errors,
       HttpServletRequest request,
-      Model model) {
+      Model model,
+      HttpServletResponse response) {
     if (errors.hasErrors()) return page(request, model);
     try {
       boolean admin = request.getServletPath().startsWith("/admin");
@@ -46,7 +51,21 @@ public class LoginController {
           "user",
           new WebConfig.SessionUser(
               user.getId(), user.getName(), java.util.Set.copyOf(user.getRoles())));
-      WebConfig.csrf(session);
+      var context =
+          org.springframework.security.core.context.SecurityContextHolder.createEmptyContext();
+      context.setAuthentication(
+          org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+              .authenticated(
+                  user.getUsername(),
+                  null,
+                  user.getRoles().stream()
+                      .map(
+                          r ->
+                              new org.springframework.security.core.authority
+                                  .SimpleGrantedAuthority("ROLE_" + r.name()))
+                      .toList()));
+      org.springframework.security.core.context.SecurityContextHolder.setContext(context);
+      contexts.saveContext(context, request, response);
       return admin ? "redirect:/admin" : "redirect:/employee";
     } catch (BusinessException e) {
       model.addAttribute("error", e.getMessage());
@@ -64,10 +83,5 @@ public class LoginController {
   public String logout(HttpSession session) {
     session.invalidate();
     return "redirect:/employee/login";
-  }
-
-  @GetMapping("/admin")
-  public String admin() {
-    return "admin/home";
   }
 }

@@ -122,4 +122,14 @@ public class ApplicationForm {
   public void setVersion(Long version) {
     this.version = version;
   }
+
+  private Long catalogueCourseId;
+
+  public Long getCatalogueCourseId() {
+    return catalogueCourseId;
+  }
+
+  public void setCatalogueCourseId(Long id) {
+    this.catalogueCourseId = id;
+  }
 }

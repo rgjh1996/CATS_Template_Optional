@@ -27,7 +27,7 @@
           Back to history
         </a>
       </div>
-      <div th:replace="~{fragments/layout :: details(${courseApplication})}">
+      <div th:replace="~{fragments/layout :: applicationDetails(${courseApplication})}">
       </div>
       <section class="card actions" th:if="${courseApplication.status.name() == 'APPLIED' || courseApplication.status.name() == 'UPDATED'}">
         <a class="button primary" th:href="@{/applications/{id}/edit(id=${courseApplication.id})}">
@@ -51,7 +51,7 @@
           </button>
         </form>
       </section>
-    </main>
+    <section class="card" th:if="${courseApplication.status.name()=='COMPLETED' and courseApplication.category.name()!='INTERNAL_TRAINING'}"><a class="button primary" th:href="@{/claims/new(applicationId=${courseApplication.id})}">Claim course fee</a></section></main>
     <footer>
       CATS · Course Application Tracking System
     </footer>

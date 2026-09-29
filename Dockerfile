@@ -5,6 +5,6 @@ COPY src src
 RUN mvn -B -DskipTests package
 FROM eclipse-temurin:21-jre
 WORKDIR /app
-COPY --from=build /workspace/target/cats-1.0.0.jar app.jar
+COPY --from=build /workspace/target/cats-2.0.0.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]

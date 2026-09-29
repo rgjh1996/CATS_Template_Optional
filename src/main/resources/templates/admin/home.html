@@ -1,39 +1,269 @@
 <!doctype html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>
-      Administration | CATS
-    </title>
-    <link rel="stylesheet" th:href="@{/css/styles.css}">
-  </head>
-  <body>
-    <header th:replace="~{fragments/layout :: header}">
-    </header>
-    <main>
-      <div th:replace="~{fragments/layout :: messages}">
-      </div>
-      <span class="eyebrow">
-        ADMINISTRATION
-      </span>
-      <h1>
-        Administrator workspace
-      </h1>
-      <section class="card">
-        <h2>
-          Core application
-        </h2>
-        <p>
-          Your administrator login is active. Employee and manager workflows are available through their respective accounts.
-        </p>
-        <p>
-          User, entitlement, catalogue and holiday maintenance screens are optional extensions and are not included in this core release.
-        </p>
-      </section>
-    </main>
-    <footer>
-      CATS · Course Application Tracking System
-    </footer>
-  </body>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="csrf-token" th:content="${csrfToken}">
+<title>Administration | CATS</title>
+<link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+<header th:replace="~{fragments/layout :: header}">
+</header>
+<main>
+<div th:replace="~{fragments/layout :: messages}">
+</div>
+<span class="eyebrow">REFERENCE DATA & ACCESS</span>
+<h1>Administration</h1>
+<div class="actions">
+<a href="#users">Users</a>
+<a href="#entitlements">Entitlements</a>
+<a href="#categories">Categories</a>
+<a href="#providers">Providers</a>
+<a href="#courses">Catalogue</a>
+<a href="#holidays">Holidays</a>
+<a th:href="@{/admin/mail}">Email outbox</a>
+<a th:href="@{/admin/claims}">Reimbursements</a>
+</div>
+<section class="card" id="users">
+<h2>Users and approval hierarchy</h2>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Name / username</th>
+<th>Roles</th>
+<th>Enabled</th>
+<th>Actions</th>
+</tr>
+</thead>
+<tbody>
+<tr th:each="u:${users}">
+<td>
+<span th:text="${u.name}">
+</span>
+<small th:text="${u.username}">
+</small>
+</td>
+<td th:text="${u.roles}">
+</td>
+<td th:text="${u.enabled}">
+</td>
+<td>
+<a th:href="@{/admin(editUser=${u.id})}">Edit</a>
+<form method="post" th:action="@{/admin/users/{id}/delete(id=${u.id})}" >
+<input type="hidden" name="_csrf" th:value="${csrfToken}">
+<button class="danger" th:if="${u.enabled and u.id!=currentUser.id()}">Delete access</button>
+</form>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="hint">Deleting access disables the account and retains application and claim history. Reassign reporting employees before deleting a manager.</p>
+</div>
+<details th:open="${editingUser!=null}">
+<summary>Create / edit user</summary>
+<form method="post" th:action="@{/admin/users}" >
+<input type="hidden" name="_csrf" th:value="${csrfToken}">
+<input type="hidden" name="id" th:value="${editingUser?.id}">
+<label for="users-username">Username</label>
+<input id="users-username" name="username" type="text" th:value="${editingUser?.username}" required maxlength="60">
+<label for="users-name">Full name</label>
+<input id="users-name" name="name" type="text" th:value="${editingUser?.name}" required maxlength="120">
+<label for="users-email">Email address</label>
+<input id="users-email" name="email" type="email" th:value="${editingUser?.email}" required maxlength="254">
+<label for="users-password">Password (leave blank to keep existing)</label>
+<input id="users-password" name="password" type="password" minlength="10" maxlength="72" autocomplete="new-password">
+<label for="users-roles">Roles (select one or more)</label>
+<select id="users-roles" name="roles" multiple required>
+<option th:each="role:${roleValues}" th:value="${role}" th:text="${role}" th:selected="${editingUser!=null and editingUser.roles.contains(role)}">
+</option>
+</select>
+<label for="users-designation">Designation</label>
+<select id="users-designation" name="designation">
+<option th:each="d:${designations}" th:value="${d}" th:text="${d}" th:selected="${editingUser!=null and editingUser.designation==d}">
+</option>
+</select>
+<label for="users-managerId">Reports to</label>
+<select id="users-managerId" name="managerId">
+<option value="">No manager</option>
+<option th:each="u:${users}" th:if="${u.enabled and u.hasRole(T(sg.edu.nus.cats.model.enums.Role).MANAGER)}" th:value="${u.id}" th:text="${u.name}" th:selected="${editingUser?.manager?.id==u.id}">
+</option>
+</select>
+<label class="check">
+<input type="checkbox" name="enabled" value="true" th:checked="${editingUser==null or editingUser.enabled}"> Account enabled</label>
+<button class="primary">Save user</button>
+</form>
+</details>
+</section>
+<section class="card" id="entitlements">
+<h2>Annual entitlements</h2>
+<table>
+<tr>
+<th>Employee</th>
+<th>Year</th>
+<th>Days</th>
+<th>Budget</th>
+</tr>
+<tr th:each="e:${entitlements}">
+<td th:text="${e.employee.name}">
+</td>
+<td th:text="${e.year}">
+</td>
+<td th:text="${e.trainingDayLimit}">
+</td>
+<td th:text="${e.budgetLimit}">
+</td>
+</tr>
+</table>
+<details>
+<summary>Set employee allowance</summary>
+<form method="post" th:action="@{/admin/entitlements}" >
+<input type="hidden" name="_csrf" th:value="${csrfToken}">
+<label for="entitlements-employeeId">Employee</label>
+<select id="entitlements-employeeId" name="employeeId">
+<option th:each="u:${users}" th:value="${u.id}" th:text="${u.name}">
+</option>
+</select>
+<label for="entitlements-year">Year</label>
+<input id="entitlements-year" name="year" type="number" th:value="${year}" min="2000" max="2100" required>
+<label for="entitlements-days">Training-day limit</label>
+<input id="entitlements-days" name="days" type="number" min="0" step="0.5" required>
+<label for="entitlements-budget">Annual budget ($)</label>
+<input id="entitlements-budget" name="budget" type="number" min="0" step="0.01" required>
+<button class="primary">Save entitlement</button>
+</form>
+</details>
+</section>
+<section class="card" id="categories">
+<h2>Course categories</h2>
+<p class="hint">Maintain labels and availability of the three CA categories.</p>
+<div th:each="c:${categories}">
+<form method="post" th:action="@{/admin/categories}" >
+<input type="hidden" name="_csrf" th:value="${csrfToken}">
+<input type="hidden" name="code" th:value="${c.code}">
+<strong th:text="${c.code}">
+</strong>
+<label th:for="|category-${c.code}|">Display label</label>
+<input th:id="|category-${c.code}|" name="label" type="text" th:value="${c.label}" required>
+<label class="check">
+<input type="checkbox" name="active" value="true" th:checked="${c.active}"> Available</label>
+<button>Save category</button>
+</form>
+</div>
+</section>
+<section class="card" id="providers">
+<h2>Training providers</h2>
+<ul>
+<li th:each="p:${providers}">
+<a th:href="@{/admin(editProvider=${p.id})}" th:text="${p.name}">
+</a>
+<span th:text="${p.active}?' (active)':' (inactive)'">
+</span>
+</li>
+</ul>
+<details th:open="${editingProvider!=null}">
+<summary>Create / edit provider</summary>
+<form method="post" th:action="@{/admin/providers}" >
+<input type="hidden" name="_csrf" th:value="${csrfToken}">
+<input type="hidden" name="id" th:value="${editingProvider?.id}">
+<label for="providers-name">Provider name</label>
+<input id="providers-name" name="name" type="text" th:value="${editingProvider?.name}" required maxlength="200">
+<label for="providers-description">Description</label>
+<input id="providers-description" name="description" type="text" th:value="${editingProvider?.description}" maxlength="2000">
+<label class="check">
+<input type="checkbox" name="active" value="true" th:checked="${editingProvider==null or editingProvider.active}"> Provider active</label>
+<button class="primary">Save provider</button>
+</form>
+</details>
+</section>
+<section class="card" id="courses">
+<h2>Course catalogue</h2>
+<table>
+<tr>
+<th>Course</th>
+<th>Category</th>
+<th>Provider</th>
+<th>Fee</th>
+<th>Active</th>
+</tr>
+<tr th:each="c:${courses}">
+<td>
+<a th:href="@{/admin(editCourse=${c.id})}" th:text="${c.title}">
+</a>
+</td>
+<td th:text="${c.category}">
+</td>
+<td th:text="${c.provider.name}">
+</td>
+<td th:text="${c.defaultFee}">
+</td>
+<td th:text="${c.active}">
+</td>
+</tr>
+</table>
+<details th:open="${editingCourse!=null}">
+<summary>Create / edit course</summary>
+<form method="post" th:action="@{/admin/courses}" >
+<input type="hidden" name="_csrf" th:value="${csrfToken}">
+<input type="hidden" name="id" th:value="${editingCourse?.id}">
+<label for="courses-title">Course title</label>
+<input id="courses-title" name="title" type="text" th:value="${editingCourse?.title}" required maxlength="200">
+<label>Category<select name="category">
+<option th:each="c:${categoryValues}" th:value="${c}" th:text="${c}" th:selected="${editingCourse!=null and editingCourse.category==c}">
+</option>
+</select>
+</label>
+<label>Provider<select name="providerId" required>
+<option th:each="p:${providers}" th:value="${p.id}" th:text="${p.name}" th:selected="${editingCourse?.provider?.id==p.id}">
+</option>
+</select>
+</label>
+<label for="courses-fee">Default fee ($)</label>
+<input id="courses-fee" name="fee" type="number" th:value="${editingCourse?.defaultFee}" min="0" step="0.01" required>
+<label class="check">
+<input type="checkbox" name="active" value="true" th:checked="${editingCourse==null or editingCourse.active}"> Course active</label>
+<button class="primary">Save course</button>
+</form>
+</details>
+</section>
+<section class="card" id="holidays">
+<h2>Public holidays</h2>
+<p class="hint">Maintain the complete observed calendar before accepting applications. Dates overlapping pending, approved or completed courses are protected against changes.</p>
+<table>
+<tr>
+<th>Date</th>
+<th>Description</th>
+<th>Actions</th>
+</tr>
+<tr th:each="h:${holidays}">
+<td th:text="${h.holidayDate}">
+</td>
+<td th:text="${h.description}">
+</td>
+<td>
+<a th:href="@{/admin(editHoliday=${h.id})}">Edit</a>
+<form method="post" th:action="@{/admin/holidays/{id}/delete(id=${h.id})}" >
+<input type="hidden" name="_csrf" th:value="${csrfToken}">
+<button class="danger">Delete</button>
+</form>
+</td>
+</tr>
+</table>
+<details th:open="${editingHoliday!=null}">
+<summary>Create / edit holiday</summary>
+<form method="post" th:action="@{/admin/holidays}" >
+<input type="hidden" name="_csrf" th:value="${csrfToken}">
+<input type="hidden" name="id" th:value="${editingHoliday?.id}">
+<label for="holidays-date">Holiday date</label>
+<input id="holidays-date" name="date" type="date" th:value="${editingHoliday?.holidayDate}" required>
+<label for="holidays-description">Holiday description</label>
+<input id="holidays-description" name="description" type="text" th:value="${editingHoliday?.description}" required maxlength="200">
+<button class="primary">Save holiday</button>
+</form>
+</details>
+</section>
+</main>
+<footer>CATS · Complete CA reference implementation</footer>
+</body>
 </html>

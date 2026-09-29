@@ -17,9 +17,12 @@ import sg.edu.nus.cats.service.CourseApplicationService;
 @RequestMapping("/applications")
 public class CourseApplicationController {
   private final CourseApplicationService service;
+  private final sg.edu.nus.cats.repository.CourseRepository courses;
 
-  public CourseApplicationController(CourseApplicationService service) {
+  public CourseApplicationController(
+      CourseApplicationService service, sg.edu.nus.cats.repository.CourseRepository courses) {
     this.service = service;
+    this.courses = courses;
   }
 
   @ModelAttribute("categories")
@@ -28,8 +31,17 @@ public class CourseApplicationController {
   }
 
   @GetMapping("/new")
-  public String form(Model m) {
-    m.addAttribute("form", new ApplicationForm());
+  public String form(Model m, @RequestParam(required = false) Long courseId) {
+    var f = new ApplicationForm();
+    if (courseId != null) {
+      var course = courses.findById(courseId).orElseThrow();
+      f.setCatalogueCourseId(courseId);
+      f.setCourseTitle(course.getTitle());
+      f.setTrainingProvider(course.getProvider().getName());
+      f.setCategory(course.getCategory());
+      f.setCourseFee(course.getDefaultFee());
+    }
+    m.addAttribute("form", f);
     return "applications/form";
   }
 

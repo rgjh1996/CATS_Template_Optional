@@ -90,4 +90,26 @@ public class User {
   public boolean hasRole(Role role) {
     return roles.contains(role);
   }
+
+  @Column(length = 254)
+  private String email;
+
+  public String getEmail() {
+    return email;
+  }
+
+  public void setEmail(String value) {
+    this.email = value;
+  }
+
+  @Column(nullable = false)
+  private boolean enabled = true;
+
+  public boolean getEnabled() {
+    return enabled;
+  }
+
+  public void setEnabled(boolean value) {
+    this.enabled = value;
+  }
 }

@@ -24,7 +24,8 @@ public class AuthenticationService {
         users
             .findByUsername(username.trim())
             .orElseThrow(() -> new BusinessException("Invalid username or password."));
-    if (!encoder.matches(password, user.getPasswordHash())
+    if (!user.getEnabled()
+        || !encoder.matches(password, user.getPasswordHash())
         || (admin
             ? !user.hasRole(Role.ADMIN)
             : !(user.hasRole(Role.EMPLOYEE) || user.hasRole(Role.MANAGER))))

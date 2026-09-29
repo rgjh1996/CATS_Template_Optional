@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="csrf-token" th:content="${csrfToken}">
+<title>Training calendar | CATS</title>
+<link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+<header th:replace="~{fragments/layout :: header}">
+</header>
+<main>
+<div th:replace="~{fragments/layout :: messages}">
+</div>
+<div class="page-heading">
+<div>
+<span class="eyebrow">ORGANISATION TRAINING</span>
+<h1 th:text="|Training calendar · ${month}|">
+</h1>
+<p>Approved courses overlapping the selected month, for all employees.</p>
+</div>
+</div>
+<form method="get" th:action="@{/calendar}" class="actions">
+<a th:href="@{/calendar(month=${previous})}">Previous month</a>
+<label>Month<select name="month">
+<option th:each="m:${months}" th:value="${m}" th:text="${m}" th:selected="${m==month}">
+</option>
+</select>
+</label>
+<button>Show month</button>
+<a th:href="@{/calendar(month=${next})}">Next month</a>
+</form>
+<section class="card">
+<table>
+<tr>
+<th>Employee</th>
+<th>Course</th>
+<th>Category</th>
+<th>Dates</th>
+</tr>
+<tr th:each="a:${applications}">
+<td th:text="${a.employee.name}">
+</td>
+<td th:text="${a.courseTitle}">
+</td>
+<td th:text="${a.category}">
+</td>
+<td th:text="|${a.startDate} – ${a.endDate}|">
+</td>
+</tr>
+</table>
+<p th:if="${#lists.isEmpty(applications)}">No approved courses this month.</p>
+<div th:replace="~{fragments/pager :: pager}">
+</div>
+</section>
+</main>
+<footer>CATS · Complete CA reference implementation</footer>
+</body>
+</html>

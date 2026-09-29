@@ -26,7 +26,7 @@
       <section class="card form-card">
         <form method="post" th:action="${applicationId != null} ? @{/applications/{id}/update(id=${applicationId})} : @{/applications}" th:object="${form}">
           <input type="hidden" name="_csrf" th:value="${csrfToken}">
-          <input type="hidden" th:field="*{version}">
+          <input type="hidden" th:field="*{version}"><input type="hidden" th:field="*{catalogueCourseId}">
           <div class="notice error" th:if="${#fields.hasAnyErrors()}">
             <p>
               Please check these fields:
@@ -51,7 +51,7 @@
                 <option value="">
                   Choose a category
                 </option>
-                <option th:each="c:${categories}" th:value="${c}" th:text="${#strings.replace(c.name(),'_',' ')}">
+                <option th:each="c:${categories}" th:value="${c}" th:text="${categoryLabels[c]}">
                 </option>
               </select>
             </div>

@@ -9,10 +9,10 @@
         CATS
       </a>
       <nav th:if="${currentUser != null}">
-        <a th:if="${!currentUser.admin() || currentUser.manager()}" th:href="@{/employee}">
+        <a th:if="${currentUser.employee() || currentUser.manager()}" th:href="@{/employee}">
           Overview
         </a>
-        <a th:if="${!currentUser.admin() || currentUser.manager()}" th:href="@{/applications}">
+        <a th:if="${currentUser.employee() || currentUser.manager()}" th:href="@{/applications}">
           My applications
         </a>
         <a th:if="${currentUser.manager()}" th:href="@{/manager/pending}">
@@ -21,7 +21,7 @@
         <a th:if="${currentUser.admin()}" th:href="@{/admin}">
           Administration
         </a>
-      </nav>
+      <a th:href="@{/calendar}">Calendar</a><details class="more-menu"><summary>More</summary><div><a th:if="${currentUser.employee() or currentUser.manager()}" th:href="@{/claims}">My fee claims</a><a th:if="${currentUser.employee() or currentUser.manager()}" th:href="@{/ledger}">Training ledger</a><a th:if="${currentUser.employee() or currentUser.manager()}" th:href="@{/rest-client}">Course catalogue & REST client</a><a th:if="${currentUser.manager()}" th:href="@{/manager/claims}">Team fee claims</a><a th:if="${currentUser.manager()}" th:href="@{/manager/reports}">Reports & CSV</a><a th:if="${currentUser.admin()}" th:href="@{/admin/mail}">Email outbox</a><a th:if="${currentUser.admin()}" th:href="@{/admin/claims}">Reimbursements</a></div></details></nav>
       <div class="account" th:if="${currentUser != null}">
         <span th:text="${currentUser.name()}">
         </span>
@@ -91,7 +91,7 @@
         </tbody>
       </table>
     </div>
-    <section th:fragment="details(a)" class="card">
+    <section th:fragment="applicationDetails(a)" class="card">
       <div class="section-heading">
         <h2 th:text="${a.courseTitle}">
         </h2>

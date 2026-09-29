@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="csrf-token" th:content="${csrfToken}">
+<title>Training ledger | CATS</title>
+<link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+<header th:replace="~{fragments/layout :: header}">
+</header>
+<main>
+<div th:replace="~{fragments/layout :: messages}">
+</div>
+<h1>My training ledger</h1>
+<form method="get" th:action="@{/ledger}" class="actions">
+<label>Year<input type="number" name="year" th:value="${year}" min="2000" max="2100">
+</label>
+<button>View</button>
+</form>
+<div th:replace="~{fragments/layout :: usage(${usage})}">
+</div>
+<section class="card">
+<p>Reimbursements settle approved fees; they do not consume the training budget a second time.</p>
+<table>
+<tr>
+<th>Recorded</th>
+<th>Entry</th>
+<th>Amount</th>
+<th>Description</th>
+</tr>
+<tr th:each="e:${entries}">
+<td th:text="${e.recordedAt}">
+</td>
+<td th:text="${e.kind}">
+</td>
+<td th:text="${e.amount}">
+</td>
+<td th:text="${e.description}">
+</td>
+</tr>
+</table>
+<p th:if="${#lists.isEmpty(entries)}">No ledger entries for this year.</p>
+</section>
+</main>
+<footer>CATS · Complete CA reference implementation</footer>
+</body>
+</html>

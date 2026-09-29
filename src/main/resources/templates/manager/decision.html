@@ -27,7 +27,7 @@
           Back to team
         </a>
       </div>
-      <div th:replace="~{fragments/layout :: details(${courseApplication})}">
+      <div th:replace="~{fragments/layout :: applicationDetails(${courseApplication})}">
       </div>
       <div th:each="entry:${context.annualUsage()}">
         <div th:replace="~{fragments/layout :: usage(${entry.value})}">

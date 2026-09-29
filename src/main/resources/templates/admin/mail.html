@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="csrf-token" th:content="${csrfToken}">
+<title>Email outbox | CATS</title>
+<link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+<header th:replace="~{fragments/layout :: header}">
+</header>
+<main>
+<div th:replace="~{fragments/layout :: messages}">
+</div>
+<h1>Email outbox</h1>
+<p>Application notifications are committed with the application change, then delivered through SMTP. Failed messages retry up to five times.</p>
+<a th:href="@{/admin}">Administration</a>
+<section class="card" th:each="e:${emails}">
+<h2 th:text="${e.subject}">
+</h2>
+<p>
+<span th:text="${e.recipient}">
+</span> · <strong th:text="${e.status}">
+</strong> · Attempts: <span th:text="${e.attempts}">
+</span>
+</p>
+<pre class="mail-body" th:text="${e.body}">
+</pre>
+<p th:if="${e.lastError}" th:text="${e.lastError}">
+</p>
+<form method="post" th:action="@{/admin/mail/{id}/retry(id=${e.id})}" >
+<input type="hidden" name="_csrf" th:value="${csrfToken}">
+<button th:if="${e.status.name()!='SENT'}">Queue for retry</button>
+</form>
+</section>
+<p th:if="${#lists.isEmpty(emails)}">No notifications yet.</p>
+</main>
+<footer>CATS · Complete CA reference implementation</footer>
+</body>
+</html>
